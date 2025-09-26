@@ -13,6 +13,10 @@ type LiterReader struct {
     reader *bufio.Reader
 }
 
+const (
+    EOF_CHAR = -1
+)
+
 func New(input io.Reader) *LiterReader {
     var obj LiterReader
     obj.reader = bufio.NewReader(input)
@@ -30,7 +34,7 @@ func (lr *LiterReader) MustReadLiter() Liter {
     char, _, err := lr.reader.ReadRune()
 
     if err == io.EOF {
-        return -1
+        return EOF_CHAR
     }
 
     if err != nil {
