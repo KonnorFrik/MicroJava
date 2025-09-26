@@ -1,8 +1,10 @@
 package scanner
 
+type LexemKind = int
+
 const (
     // error
-    LEX_NONE = iota
+    LEX_NONE LexemKind = iota
 
     // lexem classes
     LEX_IDENT
