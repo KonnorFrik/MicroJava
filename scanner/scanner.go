@@ -26,7 +26,7 @@ type Scanner struct {
 
     char litReader.Liter
     lineNum int
-    charNum int
+    colNum int
 }
 
 func New(input LiterReader) *Scanner {
@@ -37,15 +37,27 @@ func New(input LiterReader) *Scanner {
 }
 
 func (s *Scanner) ReadLexem() Lexem {
+    for s.char >= 0 && s.char <= ' ' {
+        s.readLiter()
+    }
+
+    var token = Token {
+        Line: s.lineNum,
+        Col: s.colNum,
+    }
 }
 
 // read liter from input and store inside of s
 func (s *Scanner) readLiter() {
     s.char = s.reader.MustReadLiter()
-    s.charNum++
+    s.colNum++
+
+    if s.char == litReader.EOF_CHAR {
+        return
+    }
 
     if s.char == '\n' {
-        s.charNum = 0
+        s.colNum = 0
         s.lineNum++
     }
 }
