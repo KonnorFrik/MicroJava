@@ -21,7 +21,7 @@ const (
     LEX_REM
     LEX_EQL
     LEX_NEQ
-    // LT - less than
+    // LSS - less than
     LEX_LSS
     LEX_LEQ
     LEX_GTR
