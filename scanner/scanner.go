@@ -206,7 +206,7 @@ func (s *Scanner) ReadLexem() Lexem {
     return token
 }
 
-// read liter from input and store inside of s
+// read liter from input and store in 's.char'
 func (s *Scanner) readLiter() {
     s.char = s.reader.MustReadLiter()
     s.colNum++
@@ -286,6 +286,15 @@ func (s *Scanner) readNumber(token *Token) {
 // readCharConst - read all symbols inside the \'...\'.
 // write a token.Kind = LEX_CHAR_CON even if error occured.
 func (s *Scanner) readCharConst(token *Token) {
+	token.Kind = LEX_CHAR_CON
+
+	s.readLiter()
+	token.NumVal = int(s.char)
+	s.readLiter()
+
+	if s.char != LIT_APOSTROPHE {
+        fmt.Fprintf(os.Stderr, "Error: readCharConst: %s", NewTokenError("invalid char constant", *token))
+	}
 }
 
 // isSymbol - Check is liter is in range 'a'-'z' or 'A'-'Z'.
