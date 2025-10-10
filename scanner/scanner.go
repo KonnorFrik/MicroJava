@@ -2,21 +2,12 @@ package scanner
 
 import (
 	"fmt"
-	litReader "mjc/reader"
 	"os"
 	"strconv"
 	"strings"
+
+	litReader "mjc/reader"
 )
-
-type Token struct {
-    Kind int      // Lexem type
-    Line int      // Where Lexem start
-    Col  int      // Where Lexem start
-    RawVal string // Raw value from input
-    NumVal int    // Converted numbers
-}
-
-type Lexem = Token
 
 type LiterReader interface {
     ReadLiter() (litReader.Liter, error)
@@ -28,21 +19,22 @@ type LiterReader interface {
 type Scanner struct {
     reader LiterReader
 
-    char litReader.Liter
     lineNum int
     colNum int
 }
 
+
 func New(input LiterReader) *Scanner {
     var obj Scanner
     obj.reader = input
-    obj.readLiter()
     return &obj
 }
 
 func (s *Scanner) ReadLexem() Lexem {
-    for s.char >= 0 && s.char <= ' ' {
-        s.readLiter()
+	var char = s.readLiter()
+
+    for char >= 0 && char <= ' ' {
+        char = s.readLiter()
     }
 
     var token = Token {
@@ -52,148 +44,134 @@ func (s *Scanner) ReadLexem() Lexem {
     }
 
     switch {
-    case isSymbol(s.char):
-        s.readName(&token)
+    case isSymbol(char):
+        s.readName(char, &token)
 
-    case isNumber(s.char):
-        s.readNumber(&token)
+    case isNumber(char):
+        s.readNumber(char, &token)
 
-    case s.char == LIT_APOSTROPHE:
+    case char == LIT_APOSTROPHE:
         s.readCharConst(&token)
 
 
-    case s.char == LIT_PLUS:
-        s.readLiter()
+    case char == LIT_PLUS:
+        char = s.readLiter()
 
-        if s.char == LIT_PLUS {
+        if char == LIT_PLUS {
             token.Kind = LEX_PPLUS
 
         } else {
             token.Kind = LEX_PLUS
         }
 
-    case s.char == LIT_MINUS:
-        s.readLiter()
+    case char == LIT_MINUS:
+        char = s.readLiter()
 
-        if s.char == LIT_MINUS {
+        if char == LIT_MINUS {
             token.Kind = LEX_MMINUS
 
         } else {
             token.Kind = LEX_MINUS
         }
 
-    case s.char == LIT_ASTERISK:
-        s.readLiter()
+    case char == LIT_ASTERISK:
         token.Kind = LEX_TIMES
 
-    case s.char == LIT_PERCENT:
-        s.readLiter()
+    case char == LIT_PERCENT:
         token.Kind = LEX_REM
 
 
-    case s.char == LIT_EXCLAMATION:
-        s.readLiter()
+    case char == LIT_EXCLAMATION:
+        char = s.readLiter()
 
-        if s.char == LIT_EQUAL {
+        if char == LIT_EQUAL {
             token.Kind = LEX_NEQ
         }
 
-    case s.char == LIT_LESS:
-        s.readLiter()
+    case char == LIT_LESS:
+        char = s.readLiter()
 
-        if s.char == LIT_EQUAL {
+        if char == LIT_EQUAL {
             token.Kind = LEX_LEQ
 
         } else {
             token.Kind = LEX_LSS
         }
 
-    case s.char == LIT_GREATER:
-        s.readLiter()
+    case char == LIT_GREATER:
+        char = s.readLiter()
 
-        if s.char == LIT_EQUAL {
+        if char == LIT_EQUAL {
             token.Kind = LEX_GEQ
 
         } else {
             token.Kind = LEX_GTR
         }
 
-    case s.char == LIT_VERTICAL_BAR:
-        s.readLiter()
+    case char == LIT_VERTICAL_BAR:
+        char = s.readLiter()
 
-        if s.char == LIT_EQUAL {
+        if char == LIT_EQUAL {
             token.Kind = LEX_OR
         }
 
-    case s.char == LIT_SEMICOLON:
-        s.readLiter()
+    case char == LIT_SEMICOLON:
         token.Kind = LEX_SEMICOLON
 
-    case s.char == LIT_COMMA:
-        s.readLiter()
+    case char == LIT_COMMA:
         token.Kind = LEX_COMMA
 
-    case s.char == LIT_PERIOD:
-        s.readLiter()
+    case char == LIT_PERIOD:
         token.Kind = LEX_PERIOD
 
 
-    case s.char == LIT_L_PAR:
-        s.readLiter()
+    case char == LIT_L_PAR:
         token.Kind = LEX_LPAR
 
-    case s.char == LIT_R_PAR:
-        s.readLiter()
+    case char == LIT_R_PAR:
         token.Kind = LEX_RPAR
 
 
-    case s.char == LIT_L_BRACK:
-        s.readLiter()
+    case char == LIT_L_BRACK:
         token.Kind = LEX_LBRACK
 
-    case s.char == LIT_R_BRACK:
-        s.readLiter()
+    case char == LIT_R_BRACK:
         token.Kind = LEX_RBRACK
 
 
-    case s.char == LIT_L_BRACE:
-        s.readLiter()
+    case char == LIT_L_BRACE:
         token.Kind = LEX_LBRACE
 
-    case s.char == LIT_R_BRACE:
-        s.readLiter()
+    case char == LIT_R_BRACE:
         token.Kind = LEX_RBRACE
 
 
-    case s.char == litReader.EOF_CHAR:
+    case char == litReader.EOF_CHAR:
         token.Kind = LEX_EOF
 
-    case s.char == LIT_EQUAL:
-        s.readLiter()
+    case char == LIT_EQUAL:
+		char = s.readLiter()
 
-        if s.char == LIT_EQUAL {
-            s.readLiter()
+        if char == LIT_EQUAL {
             token.Kind = LEX_EQL
 
         } else {
             token.Kind = LEX_ASSIGN
         }
 
-    case s.char == LIT_AMPERSAND:
-        s.readLiter()
+    case char == LIT_AMPERSAND:
+        char = s.readLiter()
 
-        if s.char == LIT_AMPERSAND {
-            s.readLiter()
+        if char == LIT_AMPERSAND {
             token.Kind = LEX_EQL
-
         }
 
-    case s.char == LIT_SLASH:
-        s.readLiter()
+    case char == LIT_SLASH:
+        char = s.readLiter()
 
-        if s.char == LIT_SLASH {
-            for s.char != LIT_EOL && s.char != litReader.EOF_CHAR {
-                s.readLiter()
+        if char == LIT_SLASH {
+            for char != LIT_EOL && char != litReader.EOF_CHAR {
+                char = s.readLiter()
             }
 
             token = s.ReadLexem()
@@ -207,18 +185,20 @@ func (s *Scanner) ReadLexem() Lexem {
 }
 
 // read liter from input and store in 's.char'
-func (s *Scanner) readLiter() {
-    s.char = s.reader.MustReadLiter()
+func (s *Scanner) readLiter() (char litReader.Liter) {
+    char = s.reader.MustReadLiter()
     s.colNum++
 
-    if s.char == litReader.EOF_CHAR {
+    if char == litReader.EOF_CHAR {
         return
     }
 
-    if s.char == LIT_EOL {
+    if char == LIT_EOL {
         s.colNum = 0
         s.lineNum++
     }
+
+	return
 }
 
 var keywords = map[string]LexemKind{
@@ -238,14 +218,14 @@ var keywords = map[string]LexemKind{
 
 // readName - read a complete sequence of symbols and numbers.
 // write Token.Kind = LEX_KW_* or LEX_IDENT.
-func (s *Scanner) readName(token *Token) {
+func (s *Scanner) readName(char litReader.Liter, token *Token) {
     var name strings.Builder
-    name.WriteRune(s.char)
-    s.readLiter()
+    name.WriteRune(char)
+    char = s.readLiter()
     
-    for isSymbol(s.char) || isNumber(s.char) {
-        name.WriteRune(s.char)
-        s.readLiter()
+    for isSymbol(char) || isNumber(char) {
+        name.WriteRune(char)
+        char = s.readLiter()
     }
 
     token.RawVal = name.String()
@@ -261,15 +241,15 @@ func (s *Scanner) readName(token *Token) {
 // readNumber - a complete sequence of numbers and convert it into int.
 // write Token.Kind = LEX_NUMBER.
 // write zero-value (0) if error occured.
-func (s *Scanner) readNumber(token *Token) {
+func (s *Scanner) readNumber(char litReader.Liter, token *Token) {
     token.Kind = LEX_NUMBER
     var number strings.Builder
-    number.WriteRune(s.char)
-    s.readLiter()
+    number.WriteRune(char)
+    char = s.readLiter()
 
-    for isNumber(s.char) {
-        number.WriteRune(s.char)
-        s.readLiter()
+    for isNumber(char) {
+        number.WriteRune(char)
+        char = s.readLiter()
     }
 
     // TODO: implement converting by hand (because stdlib return zero-value)
@@ -279,21 +259,26 @@ func (s *Scanner) readNumber(token *Token) {
     token.NumVal = num
 
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error: readNumber: %s", NewTokenError("cannot parse number", *token))
+        // fmt.Fprintf(os.Stderr, "Error: readNumber: %s\n", NewTokenError("cannot parse number", *token))
+        // fmt.Fprintf(os.Stderr, "Error: readNumber: %s\n", token.NewError("cannot parse number"))
+        fmt.Fprintln(os.Stderr, ErrorWrap(NewScannerError("readNumber"), token.NewError("cannot parse number")))
     }
 }
 
 // readCharConst - read all symbols inside the \'...\'.
 // write a token.Kind = LEX_CHAR_CON even if error occured.
 func (s *Scanner) readCharConst(token *Token) {
+	// TODO: implement more complex parsing for 
+	// '\u4242'
 	token.Kind = LEX_CHAR_CON
 
-	s.readLiter()
-	token.NumVal = int(s.char)
-	s.readLiter()
+	var char = s.readLiter()
+	token.NumVal = int(char)
+	char = s.readLiter()
 
-	if s.char != LIT_APOSTROPHE {
-        fmt.Fprintf(os.Stderr, "Error: readCharConst: %s", NewTokenError("invalid char constant", *token))
+	if char != LIT_APOSTROPHE {
+        // fmt.Fprintf(os.Stderr, "Error: readCharConst: %s\n", NewTokenError("invalid char constant", *token))
+        fmt.Fprintln(os.Stderr, ErrorWrap(NewScannerError("readCharConst"), token.NewError("invalid char constant")))
 	}
 }
 
@@ -304,14 +289,4 @@ func isSymbol(lit litReader.Liter) bool {
 
 func isNumber(lit litReader.Liter) bool {
     return lit >= LIT_0 && lit <= LIT_9
-}
-
-func NewTokenError(msg string, token Token) error {
-    return fmt.Errorf(
-        "TokenError: %s at line:%d column:%d, for raw value:%s",
-        msg,
-        token.Line,
-        token.Col,
-        token.RawVal,
-    )
 }
