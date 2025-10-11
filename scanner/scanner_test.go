@@ -51,8 +51,9 @@ func TestReadLexem_Name(t *testing.T) {
 		Col: 1,
 		RawVal: "name",
 	}
-	lex := scanner.ReadLexem()
+	lex, err := scanner.ReadLexem()
 
+	assert.Nil(t, err)
 	assert.Equal(t, wantLex, lex)
 }
 
@@ -66,8 +67,9 @@ func TestReadLexem_Number(t *testing.T) {
 		RawVal: "123",
 		NumVal: 123,
 	}
-	lex := scanner.ReadLexem()
+	lex, err := scanner.ReadLexem()
 
+	assert.Nil(t, err)
 	assert.Equal(t, wantLex, lex)
 }
 
@@ -78,11 +80,12 @@ func TestReadLexem_CharConst(t *testing.T) {
 		Kind: LEX_CHAR_CON,
 		Line: 1,
 		Col: 1,
-		RawVal: "'a'",
+		RawVal: "a",
 		NumVal: 97,
 	}
-	lex := scanner.ReadLexem()
+	lex, err := scanner.ReadLexem()
 
+	assert.Nil(t, err)
 	assert.Equal(t, wantLex, lex)
 }
 
