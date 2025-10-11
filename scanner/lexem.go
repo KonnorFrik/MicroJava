@@ -15,7 +15,7 @@ const (
     LEX_PLUS
     LEX_MINUS
     // multiply
-    LEX_TIMES 
+    LEX_MULT 
     LEX_SLASH
     // module divide
     LEX_REM
