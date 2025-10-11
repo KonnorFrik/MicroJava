@@ -1,8 +1,6 @@
 package scanner
 
 import (
-	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -31,28 +29,31 @@ func New(input LiterReader) *Scanner {
     return &obj
 }
 
-func (s *Scanner) ReadLexem() Lexem {
+func (s *Scanner) ReadLexem() (Lexem, error) {
 	var char = s.readLiter()
 
     for char >= 0 && char <= ' ' {
         char = s.readLiter()
     }
 
-    var token = Token {
-        Line: s.lineNum,
-        Col: s.colNum,
-        Kind: LEX_NONE,
-    }
+    var (
+		token = Token {
+			Line: s.lineNum,
+			Col: s.colNum,
+			Kind: LEX_NONE,
+		}
+		err error
+	)
 
     switch {
     case isSymbol(char):
-        s.readName(char, &token)
+        err = s.readName(char, &token)
 
     case isNumber(char):
-        s.readNumber(char, &token)
+        err = s.readNumber(char, &token)
 
     case char == LIT_APOSTROPHE:
-        s.readCharConst(&token)
+        err = s.readCharConst(&token)
 
 
     case char == LIT_PLUS:
@@ -175,14 +176,18 @@ func (s *Scanner) ReadLexem() Lexem {
                 char = s.readLiter()
             }
 
-            token = s.ReadLexem()
+            token, err = s.ReadLexem()
 
         } else {
             token.Kind = LEX_SLASH
         }
     }
 
-    return token
+	if err != nil {
+		return Lexem{}, err
+	}
+
+    return token, nil
 }
 
 // read liter from input and store in 's.char'
@@ -219,7 +224,7 @@ var keywords = map[string]LexemKind{
 
 // readName - read a complete sequence of symbols and numbers.
 // write Token.Kind = LEX_KW_* or LEX_IDENT.
-func (s *Scanner) readName(char litReader.Liter, token *Token) {
+func (s *Scanner) readName(char litReader.Liter, token *Token) error {
     var name strings.Builder
     name.WriteRune(char)
     char = s.readLiter()
@@ -237,12 +242,14 @@ func (s *Scanner) readName(char litReader.Liter, token *Token) {
     } else {
         token.Kind = LEX_IDENT
     }
+
+	return nil
 }
 
 // readNumber - a complete sequence of numbers and convert it into int.
 // write Token.Kind = LEX_NUMBER.
 // write zero-value (0) if error occured.
-func (s *Scanner) readNumber(char litReader.Liter, token *Token) {
+func (s *Scanner) readNumber(char litReader.Liter, token *Token) error {
     token.Kind = LEX_NUMBER
     var number strings.Builder
     number.WriteRune(char)
@@ -260,20 +267,19 @@ func (s *Scanner) readNumber(char litReader.Liter, token *Token) {
     token.NumVal = num
 
     if err != nil {
-        // fmt.Fprintf(os.Stderr, "Error: readNumber: %s\n", NewTokenError("cannot parse number", *token))
-        // fmt.Fprintf(os.Stderr, "Error: readNumber: %s\n", token.NewError("cannot parse number"))
-        fmt.Fprintln(os.Stderr, ErrorWrap(NewScannerError("readNumber"), token.NewError("cannot parse number")))
+		return WrapError(NewScannerError("readNumber"), token.NewError("cannot parse number"), err)
     }
+
+	return nil
 }
 
 // readCharConst - read all symbols inside the \'...\'.
 // write a token.Kind = LEX_CHAR_CON even if error occured.
-func (s *Scanner) readCharConst(token *Token) {
+func (s *Scanner) readCharConst(token *Token) error {
 	// TODO: implement more complex parsing for 
 	// '\u4242'
 	token.Kind = LEX_CHAR_CON
 	var rawName strings.Builder
-	rawName.WriteRune('\'')
 
 	var char = s.readLiter()
 	token.NumVal = int(char)
@@ -281,13 +287,12 @@ func (s *Scanner) readCharConst(token *Token) {
 	char = s.readLiter()
 
 	if char != LIT_APOSTROPHE {
-        // fmt.Fprintf(os.Stderr, "Error: readCharConst: %s\n", NewTokenError("invalid char constant", *token))
-        fmt.Fprintln(os.Stderr, ErrorWrap(NewScannerError("readCharConst"), token.NewError("invalid char constant")))
-		// TODO: return error
+		return WrapError(NewScannerError("readCharConst"), token.NewError("invalid char constant"))
 	}
 
-	rawName.WriteRune('\'')
 	token.RawVal = rawName.String()
+
+	return nil
 }
 
 // isSymbol - Check is liter is in range 'a'-'z' or 'A'-'Z'.
