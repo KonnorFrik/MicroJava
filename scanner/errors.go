@@ -14,6 +14,6 @@ func NewScannerError(funcName string) error {
 	return fmt.Errorf("ScannerError: %s", funcName)
 }
 
-func ErrorWrap(base error, toWrap error) error {
-	return fmt.Errorf("%w: %w", base, toWrap)
+func WrapError(base error, toWrap ...error) error {
+	return fmt.Errorf("%w:\n%w", base, errors.Join(toWrap...))
 }
