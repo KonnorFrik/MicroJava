@@ -10,36 +10,36 @@ type Liter = rune
 
 // LiterReader - Read liters one by one from given input.
 type LiterReader struct {
-    reader *bufio.Reader
+	reader *bufio.Reader
 }
 
 const (
-    EOF_CHAR = -1
+	EOF_CHAR = -1
 )
 
 func New(input io.Reader) *LiterReader {
-    var obj LiterReader
-    obj.reader = bufio.NewReader(input)
-    return &obj
+	var obj LiterReader
+	obj.reader = bufio.NewReader(input)
+	return &obj
 }
 
 func (lr *LiterReader) ReadLiter() (Liter, error) {
-    char, _, err := lr.reader.ReadRune()
-    return char, err
+	char, _, err := lr.reader.ReadRune()
+	return char, err
 }
 
 // Read one liter or panic at any error.
 // Return '-1' as EOF.
 func (lr *LiterReader) MustReadLiter() Liter {
-    char, _, err := lr.reader.ReadRune()
+	char, _, err := lr.reader.ReadRune()
 
-    if err == io.EOF {
-        return EOF_CHAR
-    }
+	if err == io.EOF {
+		return EOF_CHAR
+	}
 
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
-    return char
+	return char
 }
