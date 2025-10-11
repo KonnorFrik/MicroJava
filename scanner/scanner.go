@@ -27,6 +27,7 @@ type Scanner struct {
 func New(input LiterReader) *Scanner {
     var obj Scanner
     obj.reader = input
+	obj.lineNum = 1
     return &obj
 }
 
@@ -194,7 +195,7 @@ func (s *Scanner) readLiter() (char litReader.Liter) {
     }
 
     if char == LIT_EOL {
-        s.colNum = 0
+        s.colNum = 1
         s.lineNum++
     }
 
@@ -271,15 +272,22 @@ func (s *Scanner) readCharConst(token *Token) {
 	// TODO: implement more complex parsing for 
 	// '\u4242'
 	token.Kind = LEX_CHAR_CON
+	var rawName strings.Builder
+	rawName.WriteRune('\'')
 
 	var char = s.readLiter()
 	token.NumVal = int(char)
+	rawName.WriteRune(char)
 	char = s.readLiter()
 
 	if char != LIT_APOSTROPHE {
         // fmt.Fprintf(os.Stderr, "Error: readCharConst: %s\n", NewTokenError("invalid char constant", *token))
         fmt.Fprintln(os.Stderr, ErrorWrap(NewScannerError("readCharConst"), token.NewError("invalid char constant")))
+		// TODO: return error
 	}
+
+	rawName.WriteRune('\'')
+	token.RawVal = rawName.String()
 }
 
 // isSymbol - Check is liter is in range 'a'-'z' or 'A'-'Z'.

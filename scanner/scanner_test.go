@@ -1,9 +1,11 @@
 package scanner
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	litReader "mjc/reader"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsSymbol_Success(t *testing.T) {
@@ -33,3 +35,54 @@ func TestIsSymbol_EOF(t *testing.T) {
 func TestIsSymbol_EOL(t *testing.T) {
 	assert.False(t, isSymbol(LIT_EOL))
 }
+
+func TestNew_Success(t *testing.T) {
+	reader := litReader.New(strings.NewReader("foo"))
+	scanner := New(reader)
+	assert.NotNil(t, scanner)
+}
+
+func TestReadLexem_Name(t *testing.T) {
+	reader := litReader.New(strings.NewReader("name"))
+	scanner := New(reader)
+	wantLex := Lexem {
+		Kind: LEX_IDENT,
+		Line: 1,
+		Col: 1,
+		RawVal: "name",
+	}
+	lex := scanner.ReadLexem()
+
+	assert.Equal(t, wantLex, lex)
+}
+
+func TestReadLexem_Number(t *testing.T) {
+	reader := litReader.New(strings.NewReader("123"))
+	scanner := New(reader)
+	wantLex := Lexem {
+		Kind: LEX_NUMBER,
+		Line: 1,
+		Col: 1,
+		RawVal: "123",
+		NumVal: 123,
+	}
+	lex := scanner.ReadLexem()
+
+	assert.Equal(t, wantLex, lex)
+}
+
+func TestReadLexem_CharConst(t *testing.T) {
+	reader := litReader.New(strings.NewReader("'a'"))
+	scanner := New(reader)
+	wantLex := Lexem {
+		Kind: LEX_CHAR_CON,
+		Line: 1,
+		Col: 1,
+		RawVal: "'a'",
+		NumVal: 97,
+	}
+	lex := scanner.ReadLexem()
+
+	assert.Equal(t, wantLex, lex)
+}
+
